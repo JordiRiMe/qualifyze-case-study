@@ -1,13 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "qualifyze-case-study"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "alembic>=1.19.1",
+    "beautifulsoup4>=4.15.0",
+    "httpx>=0.28.1",
+    "psycopg[binary]>=3.3.4",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.15.0",
+    "pyyaml>=6.0.3",
+    "sqlalchemy>=2.0.51",
+]
+
+[project.scripts]
+qualifyze-case-study = "qualifyze.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "respx>=0.23.1",
     "ruff>=0.16.2",
 ]

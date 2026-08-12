@@ -1,13 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
 
-EXPECTED_HEADERS = {
-    "Posted Date",
-    "Letter Issue Date",
-    "Company Name",
-    "Issuing Office",
-    "Subject",
-}
+type WarningLetterIdentity = tuple[date, str]
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,4 +19,18 @@ class WarningLetter:
     @property
     def has_detail(self) -> bool:
         return self.title is not None and self.content is not None
-    
+
+    @property
+    def identity(self) -> WarningLetterIdentity:
+        return (
+            self.posted_date,
+            self.url,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class IngestionResult:
+    batches: int
+    discovered: int
+    stored: int
+    failed: int

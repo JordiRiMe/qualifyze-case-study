@@ -1,10 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
     YamlConfigSettingsSource,
 )
+from sqlalchemy import URL
 
 
 class WarningLettersRetrieverConfig(BaseModel):
@@ -14,8 +15,28 @@ class WarningLettersRetrieverConfig(BaseModel):
     crawl_delay: float
 
 
+class DatabaseConfig(BaseModel):
+    host: str
+    port: int
+    username: str
+    password: SecretStr
+    name: str
+
+    @property
+    def sqlalchemy_url(self) -> URL:
+        return URL.create(
+            drivername="postgresql+psycopg",
+            username=self.username,
+            password=self.password.get_secret_value(),
+            host=self.host,
+            port=self.port,
+            database=self.name,
+        )
+
+
 class Settings(BaseSettings):
     warning_letters: WarningLettersRetrieverConfig
+    database: DatabaseConfig
 
     model_config = SettingsConfigDict(
         yaml_file="config.yml",

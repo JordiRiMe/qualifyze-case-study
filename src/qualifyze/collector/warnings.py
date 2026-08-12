@@ -1,18 +1,19 @@
-from dataclasses import replace
 import datetime
 import hashlib
+import json
 import logging
 import time
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Mapping
+from dataclasses import replace
 from types import TracebackType
-from typing import Self
+from typing import Any, Self
 from urllib.parse import urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup, Tag
 
 from qualifyze.config import WarningLettersRetrieverConfig
-from qualifyze.typing import EXPECTED_HEADERS, WarningLetter
+from qualifyze.typing import WarningLetter
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,11 @@ class WarningLettersRetriever:
     def __init__(self, config: WarningLettersRetrieverConfig) -> None:
         self._config = config
         self._last_request_started_at: float | None = None
+        self._datatable_settings: (
+            tuple[str, dict[str, str]] | None
+        ) = None
+        self._draw = 0
+        
         self._client = httpx.Client(
             timeout=30,
             follow_redirects=True,
@@ -42,82 +48,6 @@ class WarningLettersRetriever:
             raise InvalidFDAUrlError(
                 f"Refusing to retrieve non-FDA URL: {url}"
             )
-
-    def _fetch_warning_letter_page(self, page: int=0) -> str:
-        """
-        Get HTML content from a specific page of the table
-        """
-        response = self._client.get(
-            url=self._config.url,
-            params={"page": page},
-        )
-        response.raise_for_status()
-        logger.info(
-            "Fetched page=%d status=%d",
-            page,
-            response.status_code,
-        )
-        return response.text
-
-    def _find_warning_letters_table(self, soup: BeautifulSoup) -> Tag:
-        """
-        Soup to find warning letters table in a specific page
-        """
-        for table in soup.find_all("table"):
-            headers = {
-                self._get_text(header)
-                for header in table.select("thead th")
-            }
-
-            if EXPECTED_HEADERS.issubset(headers):
-                return table
-
-        raise WarningLetterParsingError(
-            "Could not find the FDA warning-letter table"
-        )
-
-    def _parse_warning_letters(self, html: str) -> list[WarningLetter]:
-        """
-        Parse the table information of each Warning LEtter from the FDA table
-        """
-        soup = BeautifulSoup(html, "html.parser")
-        table = self._find_warning_letters_table(soup)
-
-        headers = [
-            self._get_text(header)
-            for header in table.select("thead th")
-        ]
-
-        letters: list[WarningLetter] = []
-
-        for row in table.select("tbody tr"):
-            cells = row.find_all("td", recursive=False)
-
-            if len(cells) != len(headers):
-                continue
-
-            values = dict(zip(headers, cells, strict=True))
-            company_url = self._get_url(values["Company Name"])
-
-            if company_url is None:
-                continue
-
-            letters.append(
-                WarningLetter(
-                    posted_date=self._parse_date(
-                        self._get_text(values["Posted Date"])
-                    ),
-                    issue_date=self._parse_date(
-                        self._get_text(values["Letter Issue Date"])
-                    ),
-                    company_name=self._get_text(values["Company Name"]),
-                    url=company_url,
-                    issuing_office=self._get_text(values["Issuing Office"]),
-                    subject=self._get_text(values["Subject"]),
-                )
-            )
-
-        return letters
 
     def _parse_warning_letter_detail(
         self,
@@ -139,13 +69,12 @@ class WarningLettersRetriever:
                 f"Could not find warning-letter content: {letter.url}"
             )
 
-        title = self._get_text(title_element)
         content = "\n".join(main_element.stripped_strings)
         warning_letter_summary = "\n".join([
             str(letter.posted_date),
             str(letter.company_name),
             str(letter.url),
-            str(letter.content),
+            str(content),
         ])
         warning_letter_hash = hashlib.sha256(warning_letter_summary.encode('utf-8')).hexdigest()
 
@@ -173,8 +102,9 @@ class WarningLettersRetriever:
     def _get(
         self,
         url: str,
-        headers: dict | None = None,
+        *,
         params: dict | None = None,
+        headers: Mapping[str, str] | None = None,
     ) -> httpx.Response:
         """Method to get the URL content from a specific warning letter"""
         self._validate_fda_url(url)
@@ -211,31 +141,237 @@ class WarningLettersRetriever:
         """
         Get specific content from the URL of a warning letter (text of the URL/html)
         """
-        response = self._get(
-            url=url,
-            headers={**self._config.headers},
-        )
-        content_type = response.headers.get("content-type", "")
+        html = self._fetch_html(url)
+        logger.info("Fetched warning-letter detail: %s", url)
+        return html
 
-        if "text/html" not in content_type:
+    def _get_datatable_settings(
+        self,
+    ) -> tuple[str, dict[str, str]]:
+        if self._datatable_settings is not None:
+            endpoint, base_params = self._datatable_settings
+            return endpoint, base_params.copy()
+
+        html = self._fetch_html(str(self._config.url))
+        soup = BeautifulSoup(html, "html.parser")
+
+        settings_element = soup.select_one(
+            'script[data-drupal-selector="drupal-settings-json"]'
+        )
+
+        if not isinstance(settings_element, Tag):
             raise WarningLetterParsingError(
-                f"Expected HTML from {url}, received {content_type!r}"
+                "Could not find FDA Drupal settings"
             )
 
-        logger.info("Fetched warning-letter detail: %s", url)
-        return response.text
+        raw_settings = settings_element.string
 
-    def retrieve(self, page: int=0) -> list[WarningLetter]:
-        html = self._fetch_html(
-            str(self._config.url),
-            params={"page": page},
+        if raw_settings is None:
+            raise WarningLetterParsingError(
+                "FDA Drupal settings are empty"
+            )
+
+        try:
+            settings: dict[str, Any] = json.loads(raw_settings)
+        except json.JSONDecodeError as error:
+            raise WarningLetterParsingError(
+                "Could not decode FDA Drupal settings"
+            ) from error
+
+        datatables = settings.get("datatables")
+
+        if not isinstance(datatables, dict) or not datatables:
+            raise WarningLetterParsingError(
+                "Could not find FDA DataTables configuration"
+            )
+
+        table_settings = next(iter(datatables.values()))
+
+        if not isinstance(table_settings, dict):
+            raise WarningLetterParsingError(
+                "Unexpected FDA DataTables configuration"
+            )
+
+        ajax_settings = table_settings.get("ajax")
+
+        if not isinstance(ajax_settings, dict):
+            raise WarningLetterParsingError(
+                "Could not find FDA DataTables AJAX configuration"
+            )
+
+        ajax_path = ajax_settings.get("url")
+        ajax_data = ajax_settings.get("data")
+
+        if not isinstance(ajax_path, str):
+            raise WarningLetterParsingError(
+                "Could not find FDA DataTables endpoint"
+            )
+
+        if not isinstance(ajax_data, dict):
+            raise WarningLetterParsingError(
+                "Could not find FDA DataTables base parameters"
+            )
+
+        endpoint = urljoin(
+            self._config.fda_url,
+            ajax_path,
         )
-        letters = self._parse_warning_letters(html)
+
+        base_params = {
+            str(key): "" if value is None else str(value)
+            for key, value in ajax_data.items()
+        }
+
+        self._datatable_settings = endpoint, base_params
+        return endpoint, base_params.copy()
+
+    def _build_datatable_params(
+        self,
+        base_params: dict[str, str],
+        *,
+        start: int,
+        length: int,
+    ) -> dict[str, str | int]:
+        self._draw += 1
+
+        params: dict[str, str | int] = {
+            **base_params,
+            "search_api_fulltext": "",
+            "search_api_fulltext_issuing_office": "",
+            "field_letter_issue_datetime": "All",
+            "field_change_date_closeout_letter": "",
+            "field_change_date_response_letter": "",
+            "field_change_date_2": "All",
+            "field_letter_issue_datetime_2": "",
+            "draw": self._draw,
+            "start": start,
+            "length": length,
+            "search[value]": "",
+            "search[regex]": "false",
+        }
+
+        for column_index in range(8):
+            prefix = f"columns[{column_index}]"
+
+            params[f"{prefix}[data]"] = column_index
+            params[f"{prefix}[name]"] = ""
+            params[f"{prefix}[searchable]"] = "true"
+            params[f"{prefix}[orderable]"] = (
+                "false" if column_index == 7 else "true"
+            )
+            params[f"{prefix}[search][value]"] = ""
+            params[f"{prefix}[search][regex]"] = "false"
+
+        return params
+
+    def _fetch_warning_letter_batch(
+        self,
+        *,
+        start: int,
+        length: int,
+    ) -> dict[str, Any]:
+        endpoint, base_params = self._get_datatable_settings()
+
+        params = self._build_datatable_params(
+            base_params,
+            start=start,
+            length=length,
+        )
+
+        response = self._get(
+            endpoint,
+            params=params,
+            headers={
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        )
+
+        try:
+            payload = response.json()
+        except ValueError as error:
+            raise WarningLetterParsingError(
+                "FDA DataTables response was not valid JSON"
+            ) from error
+
+        if not isinstance(payload, dict):
+            raise WarningLetterParsingError(
+                "Unexpected FDA DataTables response structure"
+            )
+
+        return payload
+
+    def _parse_datatable_rows(
+        self,
+        payload: dict[str, Any],
+    ) -> list[WarningLetter]:
+        rows = payload.get("data")
+
+        if not isinstance(rows, list):
+            raise WarningLetterParsingError(
+                "FDA DataTables response does not contain data"
+            )
+
+        letters: list[WarningLetter] = []
+
+        for row_index, row in enumerate(rows):
+            if not isinstance(row, list) or len(row) < 5:
+                logger.warning(
+                    "Skipping malformed DataTables row %d",
+                    row_index,
+                )
+                continue
+
+            company_url = self._get_fragment_url(row[2])
+
+            if company_url is None:
+                logger.warning(
+                    "Skipping row %d without company URL",
+                    row_index,
+                )
+                continue
+
+            letters.append(
+                WarningLetter(
+                    posted_date=self._parse_date(
+                        self._get_fragment_text(row[0])
+                    ),
+                    issue_date=self._parse_date(
+                        self._get_fragment_text(row[1])
+                    ),
+                    company_name=self._get_fragment_text(row[2]),
+                    url=company_url,
+                    issuing_office=self._get_fragment_text(row[3]),
+                    subject=self._get_fragment_text(row[4]),
+                )
+            )
+
+        return letters
+
+    def retrieve(
+        self,
+        start: int = 0,
+        length: int = 10,
+    ) -> list[WarningLetter]:
+        if start < 0:
+            raise ValueError("start must be zero or greater")
+
+        if length <= 0:
+            raise ValueError("length must be greater than zero")
+
+        payload = self._fetch_warning_letter_batch(
+            start=start,
+            length=length,
+        )
+
+        letters = self._parse_datatable_rows(payload)
 
         logger.info(
-            "Parsed %d warning letters from page %d",
+            "Parsed %d warning letters start=%d length=%d total=%s",
             len(letters),
-            page,
+            start,
+            length,
+            payload.get("recordsTotal"),
         )
 
         return letters
@@ -277,6 +413,29 @@ class WarningLettersRetriever:
         traceback: TracebackType | None,
     ) -> None:
         self.close()
+
+    @staticmethod
+    def _get_fragment_text(fragment: object) -> str:
+        soup = BeautifulSoup(str(fragment), "html.parser")
+        return " ".join(soup.stripped_strings)
+
+
+    def _get_fragment_url(
+        self,
+        fragment: object,
+    ) -> str | None:
+        soup = BeautifulSoup(str(fragment), "html.parser")
+        link = soup.find("a", href=True)
+
+        if not isinstance(link, Tag):
+            return None
+
+        href = link.get("href")
+
+        if not isinstance(href, str):
+            return None
+
+        return urljoin(self._config.fda_url, href)
 
     @staticmethod
     def _parse_date(value: str) -> datetime.date:

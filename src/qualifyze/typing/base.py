@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
+from enum import Enum
 
 type WarningLetterIdentity = tuple[date, str]
 
@@ -34,3 +35,23 @@ class IngestionResult:
     discovered: int
     stored: int
     failed: int
+
+
+class FEIClassification(Enum):
+    NAI = "No action indicated"
+    VAI = "Voluntary action indicated"
+    OAI = "Official action indicated"
+
+
+class ProductType(Enum):
+    BIOLOGICS = "Biologics"
+    DEVICES = "Devices"
+    DRUGS = "Drugs"
+    FOODCOSMETICS = "Food/Cosmetics"
+    TOBACCO = "Tobacco"
+    VETERINARY = "Veterinary"
+
+class ActionType(Enum):
+    INJUNCTION = "Injunction"
+    SEIZURE = "Seizure"
+    WARNINGLETTER = "Warning Letter"

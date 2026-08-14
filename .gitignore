@@ -147,6 +147,10 @@ activemq-data/
 # SageMath parsed files
 *.sage.py
 
+# Datasets (Qualifyze use case)
+*.xlsx*
+*.csv*
+
 # Environments
 .env
 .envrc

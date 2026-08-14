@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
-from qualifyze.database.models import WarningLetterRecord
+from qualifyze.database.models.warning_letter import WarningLetterRecord
 from qualifyze.typing import WarningLetter
 
 

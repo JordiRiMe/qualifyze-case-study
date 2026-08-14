@@ -14,6 +14,17 @@ class WarningLettersRetrieverConfig(BaseModel):
     headers: dict
     crawl_delay: float
 
+class FDAFilesConfig(BaseModel):
+    inspections: str
+    citations: str
+    compliance_actions: str
+    recalls: str
+
+
+class FDAIngestionConfig(BaseModel):
+    path: str
+    files: FDAFilesConfig
+
 
 class DatabaseConfig(BaseModel):
     host: str
@@ -37,6 +48,7 @@ class DatabaseConfig(BaseModel):
 class Settings(BaseSettings):
     warning_letters: WarningLettersRetrieverConfig
     database: DatabaseConfig
+    fda_ingestion: FDAIngestionConfig
 
     model_config = SettingsConfigDict(
         yaml_file="config.yml",

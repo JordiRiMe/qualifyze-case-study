@@ -1,5 +1,5 @@
 from qualifyze.config import Settings
-from qualifyze.database.models import Base
+from qualifyze.database import Base
 from qualifyze.database.session import create_database_engine
 
 

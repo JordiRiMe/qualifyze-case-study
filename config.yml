@@ -2,7 +2,15 @@ warning_letters:
   url: https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/compliance-actions-and-activities/warning-letters
   fda_url: https://www.fda.gov
   headers:
-    User-Agent: "fda-warning-letter-monitor/0.1 (contact: your-email@example.com)"
+    User-Agent: "fda-warning-letter-monitor/0.1 (contact: example@example.com)"
     Accept: "text/html,application/xhtml+xml"
     Accept-Language: "en-US,en;q=0.8"
   crawl_delay: 30
+
+fda_ingestion:
+  path: data/fda
+  files:
+    inspections: inspections.xlsx
+    citations: inspections-citations.xlsx
+    compliance_actions: compliance-actions.xlsx
+    recalls: recalls.xlsx

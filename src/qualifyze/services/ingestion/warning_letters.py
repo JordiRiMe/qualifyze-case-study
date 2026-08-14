@@ -34,8 +34,6 @@ class WarningLetterIngestionService:
 
     def run_once(
         self,
-        *,
-        max_batches: int | None = None,
     ) -> IngestionResult:
         start = 0
         batches = 0

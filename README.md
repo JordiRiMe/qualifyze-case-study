@@ -22,7 +22,7 @@ To sum up, there are to relevant events that we will focus in this use-case, the
 
 Other important notes:
 * FDA states that its public inspections database is [not comprehensive](https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/inspection-references/inspections-database-frequently-asked-questions) "since not all inspections are disclosed".
-
+* [Glossary](https://datadashboard.fda.gov/oii/glossary.htm#headingSeven) of topic-related terms from the FDA.
 
 # Repository
 
@@ -41,7 +41,11 @@ uv run qualifyze-case-study
 Several other documents must be inserted to make the project properly work.
 
 ### Datasets
-Some datasets must be added into the `/data` folder. Ideally this should be 
+Some datasets must be added into the `/data` folder. Ideally this should be automated leveraging the [Data Dashboard API Usage](https://datadashboard.fda.gov/oii/api/index.htm). But we will limit the development of this use case to excel files directly downloaded into the `/data` folder to simplify things, as there is needed an authorization to use the API. The following tables have been considered (and their corresponding file name they must take in order to work):
+* [Inspections](https://datadashboard.fda.gov/oii/cd/inspections.htm) (inspections.xlsx)
+* [Inspection citations](https://datadashboard.fda.gov/oii/cd/inspections.htm) (inspection-citations.xlsx)
+* [Compliance actions](https://datadashboard.fda.gov/oii/cd/complianceactions.htm) (compliance-actions.xlsx)
+* [Recall details](https://datadashboard.fda.gov/oii/cd/recalls.htm) (recall-details.xlsx)
 
 ## Management
 
@@ -57,7 +61,8 @@ Linting is ran with [ruff](https://docs.astral.sh/ruff/).
 
 There are several services to keep data updated:
 
-* Warning Letters: There is a service to collect available [warning letters](https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/compliance-actions-and-activities/warning-letters). There is a crawler that iterates over all the warning letters retrieving the information from each warning letter URL each 30 seconds (as mentioned in its [robots.txt](https://www.fda.gov/robots.txt) file).
+* FDA ingestion: Ingestion of data from FDA public xlsx files. In particular, data from inspections, inspection citations, compliance actions and recalls.
+* Warning Letters: There is a service to collect available [warning letters](https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/compliance-actions-and-activities/warning-letters) automatically. There is a crawler that iterates over all the warning letters retrieving the information from each warning letter URL each 30 seconds (as mentioned in its [robots.txt](https://www.fda.gov/robots.txt) file).
 
 ### Database
 

@@ -1,11 +1,9 @@
 import datetime
 
 from sqlalchemy import Date, DateTime, String, Text, UniqueConstraint, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
-
-class Base(DeclarativeBase):
-    pass
+from qualifyze.database import Base
 
 
 class WarningLetterRecord(Base):

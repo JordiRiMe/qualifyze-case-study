@@ -15,12 +15,13 @@ from qualifyze.database import Base
 
 
 class RecallRecord(Base):
-    __tablename__ = "recall"
+    __tablename__ = "recalls"
 
     __table_args__ = (
         UniqueConstraint(
             "fei_number",   
-            "product_type",
+            "event_id",
+            "product_id",
             name="uq_fda_recall_identity",
         ),
     )

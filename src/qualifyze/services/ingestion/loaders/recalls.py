@@ -48,7 +48,7 @@ class RecallsLoader:
             filename=path.name,
         )
 
-        inspections: list[Recall] = []
+        recalls: list[Recall] = []
 
         for excel_row, (_, row) in enumerate(
             frame.iterrows(),
@@ -116,7 +116,7 @@ class RecallsLoader:
 
                 values["hash"] = calculate_hash(values)
 
-                inspections.append(
+                recalls.append(
                     Recall(**values)
                 )
             except (TypeError, ValueError) as exc:
@@ -124,4 +124,4 @@ class RecallsLoader:
                     f"{path.name}, row {excel_row}: {exc}"
                 ) from exc
 
-        return inspections
+        return recalls

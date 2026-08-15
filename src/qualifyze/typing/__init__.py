@@ -9,6 +9,7 @@ from qualifyze.typing.fda import (
     ComplianceAction,
     Inspection,
     InspectionCitation,
+    Published483,
     Recall,
 )
 
@@ -20,6 +21,7 @@ __all__ = [
     "Inspection",
     "InspectionCitation",
     "ProductType",
+    "Published483",
     "Recall",
     "WarningLetter",
 ]

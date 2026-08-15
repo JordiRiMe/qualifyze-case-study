@@ -14,3 +14,4 @@ fda_ingestion:
     citations: inspections-citations.xlsx
     compliance_actions: compliance-actions.xlsx
     recalls: recalls.xlsx
+    published483s: published-483s.xlsx

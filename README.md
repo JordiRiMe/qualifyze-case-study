@@ -24,6 +24,17 @@ Other important notes:
 * FDA states that its public inspections database is [not comprehensive](https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/inspection-references/inspections-database-frequently-asked-questions) "since not all inspections are disclosed".
 * [Glossary](https://datadashboard.fda.gov/oii/glossary.htm#headingSeven) of topic-related terms from the FDA.
 
+# Problem Definition
+
+It is proposed, with the data gathered for the challenge, to try to:
+
+* **Understand and model the probability of getting an inspection**.
+* Given that a site (identified by the FEI) gets an inspection, **understand and model the final [classification]((https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/inspection-basics/inspection-classifications))** of such inspection (NAI, VAI or OAI).
+
+## Assumptions
+* Given we are working for sites managed by the FDA, we will focus the analysis to those sites located at United States.
+* For this challenge I have not been able to collect a comprehensive list of all the FEI located in United States, so we will have to be aware that the data will be biased towards FEI that already have experienced one inspection in the FDA database. We don't have any information about FEI without inspections.
+
 # Repository
 
 ## Installation
@@ -74,3 +85,6 @@ The container can be run and check it's running with the following commands:
 docker compose up -d db
 docker compose ps
 ```
+
+# Resources
+* There is a makefile to run different commands. Run any command with `make command_name`.

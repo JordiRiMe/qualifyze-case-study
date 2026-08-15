@@ -1,5 +1,6 @@
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.schema import CreateSchema
 
 from qualifyze.config import DatabaseConfig
 from qualifyze.database import Base
@@ -25,6 +26,14 @@ def create_database_tables(
     # Importing the models registers their tables in
     # Base.metadata before create_all() is executed.
     import qualifyze.database.models  # noqa: F401
+
+    with engine.begin() as connection:
+        connection.execute(
+            CreateSchema(
+                "features",
+                if_not_exists=True,
+            )
+        )
 
     Base.metadata.create_all(
         bind=engine,

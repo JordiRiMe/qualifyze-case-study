@@ -15,6 +15,12 @@ from qualifyze.database.repositories.inspection import (
 from qualifyze.database.repositories.inspection_citation import (
     InspectionCitationRepository,
 )
+from qualifyze.database.repositories.recalls import (
+    RecallsRepository,
+)
+from qualifyze.database.repositories.published483s import(
+    Published483sRepository,
+)
 from qualifyze.services.ingestion.loaders.compliance_action import (
     ComplianceActionLoader,
 )
@@ -24,10 +30,19 @@ from qualifyze.services.ingestion.loaders.inspection import (
 from qualifyze.services.ingestion.loaders.inspection_citation import (
     InspectionCitationLoader,
 )
+from qualifyze.services.ingestion.loaders.published483s import (
+    Published483Loader,
+)
+from qualifyze.services.ingestion.loaders.recalls import (
+    RecallsLoader,
+)
+
 from qualifyze.typing import (
     ComplianceAction,
     Inspection,
     InspectionCitation,
+    Published483,
+    Recall,
 )
 
 logger = logging.getLogger(__name__)
@@ -44,6 +59,8 @@ class FdaIngestionResult:
     inspections: int
     citations: int
     compliance_actions: int
+    recalls: int
+    published483s: int
 
     @property
     def total(self) -> int:
@@ -51,6 +68,8 @@ class FdaIngestionResult:
             self.inspections
             + self.citations
             + self.compliance_actions
+            + self.recalls
+            + self.published483s
         )
 
 
@@ -66,9 +85,13 @@ class FdaIngestionService:
         inspections_loader: InspectionLoader,
         citations_loader: InspectionCitationLoader,
         actions_loader: ComplianceActionLoader,
+        publised483s_loader: Published483Loader,
+        recalls_loader: RecallsLoader,
         inspection_repository: InspectionRepository,
         citation_repository: InspectionCitationRepository,
         compliance_repository: ComplianceActionRepository,
+        published483s_repository: Published483sRepository,
+        recalls_repository: RecallsRepository,
     ) -> None:
         self._config = config
         self._session_factory = session_factory
@@ -76,10 +99,14 @@ class FdaIngestionService:
         self._inspections_loader = inspections_loader
         self._citations_loader = citations_loader
         self._actions_loader = actions_loader
+        self._published483s_loader = publised483s_loader
+        self._recalls_loader = recalls_loader
 
         self._inspection_repository = inspection_repository
         self._citation_repository = citation_repository
         self._compliance_repository = compliance_repository
+        self._published483s_repository = published483s_repository
+        self._recalls_repository = recalls_repository
 
     def ingest_all(
         self,
@@ -97,11 +124,19 @@ class FdaIngestionService:
         actions = self._actions_loader.load(
             files.compliance_actions,
         )
+        published483s = self._published483s_loader.load(
+            files.published483s,
+        )
+        recalls = self._recalls_loader.load(
+            files.recalls,
+        )
 
         self._validate_records(
             inspections=inspections,
             citations=citations,
             actions=actions,
+            published483s=published483s,
+            recalls=recalls,
         )
 
         # All three upserts succeed or all three are rolled back.
@@ -124,11 +159,25 @@ class FdaIngestionService:
                     actions,
                 )
             )
+            published483s_count = (
+                self._published483s_repository.upsert_many(
+                    session,
+                    published483s,
+                )
+            )
+            recalls_count = (
+                self._recalls_repository.upsert_many(
+                    session,
+                    recalls,
+                )
+            )
 
         return FdaIngestionResult(
             inspections=inspection_count,
             citations=citation_count,
             compliance_actions=action_count,
+            published483s=published483s_count,
+            recalls=recalls_count,
         )
 
     def _resolve_files(
@@ -150,6 +199,12 @@ class FdaIngestionService:
             compliance_actions=(
                 data_directory / self._config.files.compliance_actions
             ),
+            published483s=(
+                data_directory / self._config.files.published483s
+            ),
+            recalls=(
+                data_directory / self._config.files.recalls
+            )
         )
 
         missing_files = [
@@ -158,6 +213,8 @@ class FdaIngestionService:
                 files.inspections,
                 files.citations,
                 files.compliance_actions,
+                files.recalls,
+                files.published483s,
             )
             if not path.is_file()
         ]
@@ -178,6 +235,8 @@ class FdaIngestionService:
         inspections: Sequence[Inspection],
         citations: Sequence[InspectionCitation],
         actions: Sequence[ComplianceAction],
+        published483s: Sequence[Published483],
+        recalls: Sequence[Recall],
     ) -> None:
         _raise_on_duplicates(
             records=inspections,
@@ -212,12 +271,33 @@ class FdaIngestionService:
             dataset="compliance actions",
         )
 
+        _raise_on_duplicates(
+            records=published483s,
+            key=lambda record: (
+                record.record_id,
+                record.fei_number,
+            ),
+            dataset="published 483s",
+        )
+
+        _raise_on_duplicates(
+            records=recalls,
+            key=lambda record: (
+                record.event_id,
+                record.product_id,
+                record.fei_number,
+            ),
+            dataset="recalls",
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class FdaIngestionFiles:
     inspections: Path
     citations: Path
     compliance_actions: Path
+    published483s: Path
+    recalls: Path
 
 
 def _raise_on_duplicates[T, K](
@@ -255,6 +335,8 @@ def create_fda_ingestion_service(
         inspections_loader=InspectionLoader(),
         citations_loader=InspectionCitationLoader(),
         actions_loader=ComplianceActionLoader(),
+        publised483s_loader=Published483Loader(),
+        recalls_loader=RecallsLoader(),
         inspection_repository=InspectionRepository(
             session_factory=session_factory,
         ),
@@ -264,6 +346,12 @@ def create_fda_ingestion_service(
         compliance_repository=ComplianceActionRepository(
             session_factory=session_factory,
         ),
+        published483s_repository=Published483sRepository(
+            session_factory=session_factory,
+        ),
+        recalls_repository=RecallsRepository(
+            session_factory=session_factory,
+        )
     )
 
 

@@ -18,6 +18,7 @@ class FDAFilesConfig(BaseModel):
     inspections: str
     citations: str
     compliance_actions: str
+    published483s: str
     recalls: str
 
 

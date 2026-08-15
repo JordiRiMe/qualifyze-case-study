@@ -69,3 +69,15 @@ class Recall:
     center: str
     recall_details: str
     hash: str
+
+
+@dataclass(frozen=True, slots=True)
+class Published483:
+    fei_number: str
+    legal_name: str
+    record_date: datetime.date
+    record_type: str
+    publish_date: datetime.date
+    download: str
+    record_id: str
+    hash: str

@@ -4,12 +4,12 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
-from qualifyze.database.models.compliance_action import ComplianceActionRecord
+from qualifyze.database.models.recalls import RecallRecord
 from qualifyze.database.repositories import _batched
 from qualifyze.typing import Recall
 
 
-class ComplianceActionRepository:
+class RecallsRepository:
     def __init__(
         self,
         session_factory: sessionmaker[Session],
@@ -58,26 +58,32 @@ class ComplianceActionRepository:
 
         for batch in _batched(recalls, size=1000):
             values = [
-                self._values(inspection)
-                for inspection in batch
+                self._values(recall)
+                for recall in batch
             ]
 
-            statement = insert(ComplianceActionRecord).values(values)
+            statement = insert(RecallRecord).values(values)
 
             statement = statement.on_conflict_do_update(
-                constraint="uq_fda_compliance_action_identity", 
+                constraint="uq_fda_recall_identity", 
                 set_ = {
-                    "legal_name":
-                        statement.excluded.legal_name,
-                    "state": statement.excluded.state,
-                    "country_area":
-                        statement.excluded.country_area,
-                    "product_type":
-                        statement.excluded.product_type,
-                    "action_taken_date":
-                        statement.excluded.action_taken_date,
-                    "action_type":
-                        statement.excluded.action_type,
+                    "fei_number": statement.excluded.fei_number,
+                    "legal_name": statement.excluded.legal_name,
+                    "product_type": statement.excluded.product_type,
+                    "product_classification": statement.excluded.product_classification,
+                    "status": statement.excluded.status,
+                    "distribution_partner": statement.excluded.distribution_partner,
+                    "recalling_firm_city": statement.excluded.recalling_firm_city,
+                    "recalling_firm_state": statement.excluded.recalling_firm_state,
+                    "recalling_firm_country": statement.excluded.recalling_firm_country,
+                    "center_classification_date": statement.excluded.center_classification_date,
+                    "reason_recall": statement.excluded.reason_recall,
+                    "product_description": statement.excluded.product_description,
+                    "event_id": statement.excluded.event_id,
+                    "event_classification": statement.excluded.event_classification,
+                    "product_id": statement.excluded.product_id,
+                    "center": statement.excluded.center,
+                    "recall_details": statement.excluded.recall_details,
                     "hash": statement.excluded.hash,
                     "last_seen_at": func.now(),
                 },

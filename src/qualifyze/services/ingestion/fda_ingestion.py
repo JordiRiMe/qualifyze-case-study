@@ -377,6 +377,13 @@ def main() -> None:
         create_session_factory,
     )
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format=(
+            "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+        )
+    )
+
     config = Settings()  # type: ignore
     engine = create_database_engine(config.database)
     create_database_tables(engine)

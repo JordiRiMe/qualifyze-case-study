@@ -20,18 +20,17 @@ from qualifyze.database import Base
 
 class InspectionClassificationFeature(Base):
     """
-    Point-in-time feature set for predicting an inspection's
-    final NAI, VAI or OAI classification.
+    Point-in-time features for predicting whether an inspection
+    receives NAI, VAI or OAI.
 
     Grain:
         One row per physical inspection.
 
-    Prediction time:
-        Immediately before prediction_date.
+    Prediction date:
+        Currently represented by inspection_end_date.
 
-    Important:
-        Every feature must be derived only from information
-        available before prediction_date.
+    History:
+        Features use only events dated before prediction_date.
     """
 
     __tablename__ = "inspection_classification_v1"
@@ -48,6 +47,21 @@ class InspectionClassificationFeature(Base):
         CheckConstraint(
             "prior_inspection_count >= 0",
             name="ck_inspection_feature_prior_count",
+        ),
+        CheckConstraint(
+            "is_first_observed_inspection IN (0, 1)",
+            name="ck_inspection_feature_first_observed",
+        ),
+        CheckConstraint(
+            """
+            previous_classification_adverse IS NULL
+            OR previous_classification_adverse IN (0, 1)
+            """,
+            name="ck_inspection_feature_previous_adverse",
+        ),
+        CheckConstraint(
+            "previous_classification_missing IN (0, 1)",
+            name="ck_inspection_feature_previous_missing",
         ),
         CheckConstraint(
             """
@@ -84,11 +98,17 @@ class InspectionClassificationFeature(Base):
         {"schema": "features"},
     )
 
-    # Observation identity
+    # Identity
 
     inspection_id: Mapped[int] = mapped_column(
         BigInteger,
         primary_key=True,
+    )
+
+    dataset_version: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        index=True,
     )
 
     fei_number: Mapped[str] = mapped_column(
@@ -102,7 +122,7 @@ class InspectionClassificationFeature(Base):
         index=True,
     )
 
-    # Prediction targets
+    # Target
 
     target_classification: Mapped[str] = mapped_column(
         String(3),
@@ -121,98 +141,138 @@ class InspectionClassificationFeature(Base):
         index=True,
     )
 
-    # Previous inspection
+    # Inspection history
 
     prior_inspection_count: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
     )
 
+    is_first_observed_inspection: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False,
+    )
+
     days_since_previous_inspection: Mapped[int | None] = (
         mapped_column(
             Integer,
-            nullable=True,
+            nullable=False,
         )
     )
 
-    previous_classification: Mapped[str | None] = mapped_column(
-        String(3),
-        nullable=True,
+    previous_classification_adverse: Mapped[int | None] = (
+        mapped_column(
+            SmallInteger,
+            nullable=False,
+        )
     )
 
-    previous_severity: Mapped[int | None] = mapped_column(
+    previous_classification_missing: Mapped[int] = mapped_column(
         SmallInteger,
-        nullable=True,
+        nullable=False,
     )
 
-    # Historical classifications
+    # Product history
 
-    prior_nai_count: Mapped[int] = mapped_column(
+    historical_product_type_count: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
     )
 
-    prior_vai_count: Mapped[int] = mapped_column(
-        Integer,
+    has_prior_product_food: Mapped[int] = mapped_column(
+        SmallInteger,
         nullable=False,
     )
 
-    prior_oai_count: Mapped[int] = mapped_column(
-        Integer,
+    has_prior_product_drug: Mapped[int] = mapped_column(
+        SmallInteger,
         nullable=False,
     )
 
-    prior_adverse_rate: Mapped[float | None] = mapped_column(
-        Float,
-        nullable=True,
+    has_prior_product_device: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False,
     )
 
-    # Other historical regulatory events
+    has_prior_product_biologic: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False,
+    )
+
+    has_prior_product_veterinary: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False,
+    )
+
+    has_prior_product_tobacco: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False,
+    )
+
+    has_prior_product_other: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False,
+    )
+
+    # Citation history
 
     prior_citation_count: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
     )
 
-    prior_recall_count: Mapped[int] = mapped_column(
+    previous_inspection_citation_count: Mapped[int] = (
+        mapped_column(
+            Integer,
+            nullable=False,
+        )
+    )
+
+    prior_citations_per_inspection: Mapped[float] = (
+        mapped_column(
+            Float,
+            nullable=False,
+        )
+    )
+
+    repeated_cfr_count: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
     )
 
-    prior_compliance_action_count: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-    )
-
-    # Facility information
-
-    country_area: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True,
-    )
+    # Geography
 
     state: Mapped[str | None] = mapped_column(
         String(100),
         nullable=True,
     )
 
-    product_type: Mapped[str | None] = mapped_column(
-        String(250),
-        nullable=True,
+    # Published Form 483 history
+
+    prior_published_483_count_per_inspection: Mapped[float] = (
+        mapped_column(
+            Float,
+            nullable=False,
+        )
     )
 
-    # Dataset lineage
+    # Warning-letter history
 
-    feature_as_of_date: Mapped[datetime.date] = mapped_column(
-        Date,
+    prior_warning_letter_count_per_inspection: Mapped[float] = (
+        mapped_column(
+            Float,
+            nullable=False,
+        )
+    )
+
+    # Recall history
+
+    prior_recall_event_count_per_inspection: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
     )
 
-    dataset_version: Mapped[str] = mapped_column(
-        String(50),
-        nullable=False,
-        index=True,
-    )
+    # Lineage
 
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),

@@ -1,9 +1,18 @@
+import logging
+
 from qualifyze.config import Settings
 from qualifyze.database import Base
 from qualifyze.database.session import create_database_engine
 
 
 def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format=(
+            "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+        )
+    )
+    
     config = Settings()  # type: ignore
     engine = create_database_engine(config.database)
 

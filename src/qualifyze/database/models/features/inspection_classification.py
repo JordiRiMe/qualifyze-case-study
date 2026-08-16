@@ -60,10 +60,6 @@ class InspectionClassificationFeature(Base):
             name="ck_inspection_feature_previous_adverse",
         ),
         CheckConstraint(
-            "previous_classification_missing IN (0, 1)",
-            name="ck_inspection_feature_previous_missing",
-        ),
-        CheckConstraint(
             """
             (
                 target_classification = 'NAI'
@@ -167,13 +163,7 @@ class InspectionClassificationFeature(Base):
         )
     )
 
-    previous_classification_missing: Mapped[int] = mapped_column(
-        SmallInteger,
-        nullable=False,
-    )
-
     # Product history
-
     historical_product_type_count: Mapped[int] = mapped_column(
         Integer,
         nullable=False,

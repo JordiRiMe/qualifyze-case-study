@@ -150,6 +150,8 @@ activemq-data/
 # Datasets (Qualifyze use case)
 *.xlsx*
 *.csv*
+*.json*
+*.joblib*
 
 # Environments
 .env

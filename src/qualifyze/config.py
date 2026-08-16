@@ -1,4 +1,10 @@
-from pydantic import BaseModel, SecretStr
+from pathlib import Path
+
+from pydantic import (
+    BaseModel,
+    Field,
+    SecretStr,
+)
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -46,10 +52,34 @@ class DatabaseConfig(BaseModel):
         )
 
 
+class InspectionClassificationModelConfig(
+    BaseModel
+):
+    dataset_version: str = Field(
+        min_length=1,
+    )
+    model_version: str = Field(
+        min_length=1,
+    )
+    artifact_root: Path
+    random_state: int = 42
+    maximum_iterations: int = Field(
+        default=2000,
+        gt=0,
+    )
+
+
+class ModelingConfig(BaseModel):
+    inspection_classification: (
+        InspectionClassificationModelConfig
+    )
+
+
 class Settings(BaseSettings):
     warning_letters: WarningLettersRetrieverConfig
     database: DatabaseConfig
     fda_ingestion: FDAIngestionConfig
+    modeling: ModelingConfig
 
     model_config = SettingsConfigDict(
         yaml_file="config.yml",

@@ -15,3 +15,11 @@ fda_ingestion:
     compliance_actions: compliance-actions.xlsx
     recalls: recalls.xlsx
     published483s: published-483s.xlsx
+
+modeling:
+  inspection_classification:
+    dataset_version: classification-v1
+    model_version: logistic-v1
+    artifact_root: artifacts/inspection_classification
+    random_state: 42
+    maximum_iterations: 500

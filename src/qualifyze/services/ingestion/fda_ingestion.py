@@ -15,11 +15,11 @@ from qualifyze.database.repositories.inspection import (
 from qualifyze.database.repositories.inspection_citation import (
     InspectionCitationRepository,
 )
+from qualifyze.database.repositories.published483s import (
+    Published483sRepository,
+)
 from qualifyze.database.repositories.recalls import (
     RecallsRepository,
-)
-from qualifyze.database.repositories.published483s import(
-    Published483sRepository,
 )
 from qualifyze.services.ingestion.loaders.compliance_action import (
     ComplianceActionLoader,
@@ -36,7 +36,6 @@ from qualifyze.services.ingestion.loaders.published483s import (
 from qualifyze.services.ingestion.loaders.recalls import (
     RecallsLoader,
 )
-
 from qualifyze.typing import (
     ComplianceAction,
     Inspection,

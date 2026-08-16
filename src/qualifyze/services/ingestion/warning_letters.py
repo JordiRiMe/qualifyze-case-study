@@ -6,7 +6,7 @@ from qualifyze.collector.warnings import (
     WarningLetterParsingError,
     WarningLettersRetriever,
 )
-from qualifyze.config import WarningLettersRetrieverConfig
+from qualifyze.config import Settings, WarningLettersRetrieverConfig
 from qualifyze.database.repositories.warning_letters import WarningLetterRepository
 from qualifyze.database.session import (
     create_database_engine,

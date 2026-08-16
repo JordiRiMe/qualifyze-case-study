@@ -1,11 +1,11 @@
 import argparse
 import datetime
 import logging
+from datetime import UTC
 from pathlib import Path
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +99,6 @@ class InspectionClassificationFeatureBuilder:
                           AND (
                               is_first_observed_inspection
                                     IS DISTINCT FROM 1
-                                OR previous_classification_missing
-                                    IS DISTINCT FROM 1
                                 OR previous_classification_adverse
                                     IS DISTINCT FROM 0
                                 OR days_since_previous_inspection
@@ -173,7 +171,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--cutoff-date",
         type=parse_date,
-        default=datetime.date.today(),
+        default=datetime.datetime.now(tz=UTC).date(),
         help=(
             "Latest inspection date included in the "
             "snapshot, in YYYY-MM-DD format. "
@@ -237,7 +235,7 @@ def main() -> None:
 
         logger.info(
             "Starting feature build: "
-            "version=%s cutoff=%s",
+            "version=%s",
             args.dataset_version,
         )
 
@@ -251,7 +249,7 @@ def main() -> None:
 
         logger.info(
             "Feature build completed: "
-            "version=%s cutoff=%s rows=%d",
+            "version=%s rows=%d",
             args.dataset_version,
             inserted_count,
         )

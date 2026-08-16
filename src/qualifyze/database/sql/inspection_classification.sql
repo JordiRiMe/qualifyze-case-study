@@ -481,7 +481,6 @@ inserted AS (
         is_first_observed_inspection,
         days_since_previous_inspection,
         previous_classification_adverse,
-        previous_classification_missing,
         historical_product_type_count,
         has_prior_product_food,
         has_prior_product_drug,
@@ -529,11 +528,6 @@ inserted AS (
             WHEN target.previous_severity = 0 THEN 0
             WHEN target.previous_severity IN (1, 2) THEN 1
         END::SMALLINT AS previous_classification_adverse,
-        
-        CASE
-            WHEN target.previous_inspection_id IS NULL THEN 1
-            ELSE 0
-        END::SMALLINT AS previous_classification_missing,
 
         /* Historical product types */
         COALESCE(

@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
-from qualifyze.database.models.published483s import Published483Record
+from qualifyze.database.models.core.published483s import Published483Record
 from qualifyze.database.repositories import _batched
 from qualifyze.typing import Published483
 

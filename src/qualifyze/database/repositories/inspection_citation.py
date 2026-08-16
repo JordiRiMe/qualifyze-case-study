@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
-from qualifyze.database.models.inspection_citation import InspectionCitationRecord
+from qualifyze.database.models.core.inspection_citation import InspectionCitationRecord
 from qualifyze.database.repositories import _batched
 from qualifyze.typing import InspectionCitation
 

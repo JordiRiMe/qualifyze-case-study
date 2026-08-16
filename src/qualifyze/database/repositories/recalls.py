@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
-from qualifyze.database.models.recalls import RecallRecord
+from qualifyze.database.models.core.recalls import RecallRecord
 from qualifyze.database.repositories import _batched
 from qualifyze.typing import Recall
 

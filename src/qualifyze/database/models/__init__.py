@@ -1,22 +1,22 @@
-from qualifyze.database.models.compliance_action import (
+from qualifyze.database.models.core.compliance_action import (
     ComplianceActionRecord,
 )
-from qualifyze.database.models.inspection import (
+from qualifyze.database.models.core.inspection import (
     InspectionRecord,
 )
-from qualifyze.database.models.inspection_citation import (
+from qualifyze.database.models.core.inspection_citation import (
     InspectionCitationRecord,
 )
-from qualifyze.database.models.warning_letter import (
+from qualifyze.database.models.core.warning_letter import (
     WarningLetterRecord,
 )
-from qualifyze.database.models.recalls import (
+from qualifyze.database.models.core.recalls import (
     RecallRecord,
 )
-from qualifyze.database.models.published483s import (
+from qualifyze.database.models.core.published483s import (
     Published483Record
 )
-from qualifyze.database.models.inspection_classification_features import (
+from qualifyze.database.models.features.inspection_classification import (
     InspectionClassificationFeature,
 )
 

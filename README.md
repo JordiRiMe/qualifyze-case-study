@@ -4,7 +4,7 @@ This repository contains the development behind the interview of Jordi Ripoll Me
 # Context
 This section is intended as a descriptive section of the business problem and gather all the knowledge behind the use case.
 
-The main objective is to assess the risk of future non-compliance (or inspections) for a given supplier based on historical data (such as audit data and warning letters). 
+The main objective is to assess the risk of future non-compliance (or [inspections](https://www.fda.gov/media/181859/download?attachment)) for a given supplier based on historical data (such as audit data and warning letters). 
 
 Inspections are identified by the **FEI** code (**FDA Establishment Identifier**) which is usually an individual supplier facility/site. Notice one company can operate on several facilities with different compliance histories ([Inspections Database FAQ](https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/inspection-references/inspections-database-frequently-asked-questions)).
 
@@ -52,11 +52,12 @@ uv run qualifyze-case-study
 Several other documents must be inserted to make the project properly work.
 
 ### Datasets
-Some datasets must be added into the `/data` folder. Ideally this should be automated leveraging the [Data Dashboard API Usage](https://datadashboard.fda.gov/oii/api/index.htm). But we will limit the development of this use case to excel files directly downloaded into the `/data` folder to simplify things, as there is needed an authorization to use the API. The following tables have been considered (and their corresponding file name they must take in order to work):
+Some datasets must be added into the `/data/fda` folder. Ideally this should be automated leveraging the [Data Dashboard API Usage](https://datadashboard.fda.gov/oii/api/index.htm). But we will limit the development of this use case to excel files directly downloaded into the `/data/fda` folder to simplify things, as there is needed an authorization to use the API. The following tables have been considered (and their corresponding file name they must take in order to work):
 * [Inspections](https://datadashboard.fda.gov/oii/cd/inspections.htm) (inspections.xlsx)
 * [Inspection citations](https://datadashboard.fda.gov/oii/cd/inspections.htm) (inspection-citations.xlsx)
 * [Compliance actions](https://datadashboard.fda.gov/oii/cd/complianceactions.htm) (compliance-actions.xlsx)
-* [Recall details](https://datadashboard.fda.gov/oii/cd/recalls.htm) (recall-details.xlsx)
+* [Recall details](https://datadashboard.fda.gov/oii/cd/recalls.htm) (recalls.xlsx)
+* [Published 483s](https://datadashboard.fda.gov/oii/cd/inspections.htm) (published-483s.xlsx)
 
 ## Management
 

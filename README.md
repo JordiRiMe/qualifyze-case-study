@@ -87,5 +87,14 @@ docker compose up -d db
 docker compose ps
 ```
 
+## Implemented scope
+
+This repository implements a binary classification model that predicts whether an FDA inspection will receive:
+
+- NAI: No Action Indicated
+- VAI/OAI: Adverse classification
+
+Predicting the time until a site's next inspection is presented as a future survival-analysis extension and is not part of the production training pipeline.
+
 # Resources
 * There is a makefile to run different commands. Run any command with `make command_name`.

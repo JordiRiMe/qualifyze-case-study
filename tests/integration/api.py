@@ -1,0 +1,1 @@
+# Here we could insert any integration test with APIs and other integration implementations
